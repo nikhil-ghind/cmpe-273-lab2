@@ -1,0 +1,18 @@
+-python program that starts up a server using REST api
+-the input argument must include amount of requests to send to test latency
+-when the server program receives a curl response call the server sends a POST /order to the order program
+-testing should check if the program receives a message from the notification program
+
+expected procedure
+1. server receives curl call
+2. server sends POST /order to order program; timer starts for latency
+3. order program receives POST /order call and sends POST /reserve to the inventory program
+4. inventory program receives POST /reserve call and sends an acknowledgement message back to order program
+-inventory program must be modified to have a timer argument for delay testing
+5. order program receives acknowledgement message from inventory program and sends POST /send to notification program
+6. notification program receives POST /send from order program and sends a success message to server
+7. server receives success message from notification program; timer ends for latency calculation
+
+possible failures
+-order program does not receive and acknowledgement message from the inventory program in time, timeout occurs
+-inventory program is not available, timeout also occurs

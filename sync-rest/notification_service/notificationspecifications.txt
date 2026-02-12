@@ -1,0 +1,2 @@
+-python program that starts up a client that listens to REST calls
+-when the program receives a POST call from the order program then it sends an acknowledgement message to the server

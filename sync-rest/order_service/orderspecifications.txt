@@ -1,0 +1,5 @@
+-python program that starts up a client that listens to REST calls
+-when the program receives a POST /order call from another program then it sends POST /reserve to the inventory service program
+-assuming that the inventory service program successfully works the inventory service sends an acknowledgement to the order program
+-if the order program receives the acknowledgement then it sends POST /send to the notification service
+-if the order program does not receive the acknowledgement from the inventory within a timeframe then it times out and returns an error

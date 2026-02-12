@@ -1,0 +1,3 @@
+-python program that starts up a client that listens to REST calls
+-when the program receives a POST call from the order service then it sends an acknowledgement to the order service
+-the program must be able to handle an input argument of how many seconds to delay in order to test order latency based on testing specifications
