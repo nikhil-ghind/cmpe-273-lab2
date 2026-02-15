@@ -1,0 +1,6 @@
+-python program that starts up a Kafka consumer in the "analytics-group" consumer group and a FastAPI server on port 8002
+-the program consumes events from both the "orders" and "inventory-events" topics
+-the program computes orders per minute (bucketed by event createdAt time) and failure rate (failed / total reservations)
+-the program periodically prints metrics to stdout and writes them to a metrics.txt file
+-when the program receives a POST /replay call it resets consumer group offsets to the beginning and recomputes all metrics from scratch
+-when the program receives a GET /metrics call it returns the current metrics as JSON

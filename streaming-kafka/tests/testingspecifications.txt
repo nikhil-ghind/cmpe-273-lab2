@@ -1,0 +1,19 @@
+-python program that runs pytest tests against the streaming Kafka services
+-services must be running via docker compose before tests are executed
+
+expected procedure for load test (C6)
+1. test calls POST /load-test on producer_order to produce 10,000 OrderPlaced events
+2. test waits for inventory_consumer and analytics_consumer to process all events
+3. test calls GET /metrics on analytics_consumer and verifies total_orders >= 10,000
+4. test verifies total_reservations >= 10,000 and orders_per_minute has entries
+
+expected procedure for lag test (C5)
+1. inventory_consumer is started with CONSUMER_THROTTLE_MS set to add delay per message
+2. test produces events and queries consumer group lag via Kafka admin client
+3. test verifies consumer group "inventory-service-group" exists and lag can be observed
+
+expected procedure for replay test (C4)
+1. test calls GET /metrics on analytics_consumer to capture "before" metrics
+2. test calls POST /replay on analytics_consumer to trigger offset reset and recomputation
+3. test waits for analytics_consumer to reprocess all events
+4. test calls GET /metrics again and verifies "after" metrics match or exceed "before" metrics
