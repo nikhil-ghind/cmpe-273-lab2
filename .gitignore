@@ -1,0 +1,31 @@
+# Markdown files
+*.md
+
+# Claude
+.claude/
+CLAUDE.md
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
