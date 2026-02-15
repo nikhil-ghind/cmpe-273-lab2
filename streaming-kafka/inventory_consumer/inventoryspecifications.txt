@@ -1,0 +1,6 @@
+-python program that starts up a Kafka consumer in the "inventory-service-group" consumer group
+-the program consumes OrderPlaced events from the "orders" topic
+-when the program receives an OrderPlaced event it reserves inventory and produces an InventoryReserved or InventoryFailed event to the "inventory-events" topic
+-the program must be idempotent: if the same orderId is received more than once it skips processing and does not double reserve
+-the program must be able to handle an input argument INVENTORY_FAIL_RATE to inject a percentage of failures for testing
+-the program must be able to handle an input argument CONSUMER_THROTTLE_MS to add artificial delay per message in order to demonstrate consumer lag

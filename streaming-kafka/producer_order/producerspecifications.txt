@@ -1,0 +1,5 @@
+-python program that starts up a FastAPI server that publishes events to Kafka
+-when the program receives a POST /produce call it publishes an OrderPlaced event to the "orders" Kafka topic
+-the event key is the orderId and the value is a JSON payload with eventId, eventType, orderId, items, and createdAt
+-when the program receives a POST /load-test call it produces 10,000 OrderPlaced events for load testing
+-the load-test endpoint must flush all messages to Kafka before returning a response
