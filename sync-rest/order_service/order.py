@@ -17,7 +17,9 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(message)s',
 )
 
+#setting up POST targets with inventory and notification services
 INVENTORY_URL = "http://localhost:8081/reserve"
+NOTIFICATION_URL = "http://localhost:8082/send"
 HEADERS = {"Content-Type": "application/json"}
 
 #health check
@@ -27,44 +29,48 @@ def health():
     status = "ok"
     return jsonify({"status": status}), 200
 
+#when receiving POST /order
 @app.route('/order', methods=['POST'])
 def process_order():
-    start_time = time.time()
+    start_time = time.time()#start latency
     
     try:
         # Receive the JSON message
         order_data = request.get_json()
+        logger.info(f"Received order {order_data}")
+        logger.info(f"Sending {order_data} to InventoryService")
         
-        #placeholder for POST /reserve part
-        # Send POST /reserve to localhost:8081 with the same JSON field
-        ##requests.post("http://localhost:8081/reserve", json=order_data)
-
-        # test
-        logger.info(f"received order {order_data}")
-        notification_data = {"notify": "success"}
-
-        response = requests.post(INVENTORY_URL, json=order_data, headers=HEADERS)
-        
-        #placeholder for POST /send part
-        # When the program receives a message from localhost:8081 (synchronous return above)
-        # Send POST /send to localhost:8082 with {"notify":"success"}
-        ##notification_data = {"notify": "success"}
-        ##requests.post("http://localhost:8082/send", json=notification_data)
-        
+        #send order data to inventory; may be affected by inventory latency or availability
+        responseInventory = requests.post(INVENTORY_URL, json=order_data, headers=HEADERS)
+        if (responseInventory.ok == True):#if inventory call is successful
+            logger.info(f"Successfully sent {order_data} to InventoryService")
+            logger.info(f"Sending {order_data} to NotificationService")
+            responseNotification = requests.post(NOTIFICATION_URL, json = order_data, headers = HEADERS)#send to notification
+            if (responseNotification.ok == True):
+                logger.info(f"Notification successfully sent")
+            else:
+                logger.info(f"Error on sending notification")
+                responseNotification.raise_for_status()
+        else:
+            logger.info(f"Error on sending inventory")
+            responseInventory.raise_for_status()
+    
         # Calculate latency
         latency = time.time() - start_time
         
         # Log service name, endpoint, status, and latency
         logger.info(f"Service: {SERVICE_NAME}, Endpoint: /order, Status: Success, Latency: {latency:.4f}s")
         
-        return jsonify(notification_data), 200
+        post_order_data = {"POST /order": "success"}
+        return jsonify(post_order_data), 200
         
-    except Exception as e:
+    except Exception as e:#exception if inventory or notification services are unavailable
         latency = time.time() - start_time
         logger.error(f"Service: {SERVICE_NAME}, Endpoint: /order, Status: Error, Latency: {latency:.4f}s")
+        logger.error(f"error: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # Log when the server starts
-    logger.info(f"Service: {SERVICE_NAME}, Endpoint: localhost:8080, Status: Starting, Latency: N/A")
+    logger.info(f"Service: {SERVICE_NAME}, Endpoint: {HOST}:{PORT}, Status: Starting, Latency: N/A")
     app.run(host=HOST, port=PORT)
