@@ -1,0 +1,7 @@
+  notification_service:
+    build: ./notification_service
+    depends_on:
+      - rabbitmq
+    environment:
+      AMQP_URL: amqp://guest:guest@rabbitmq:5672/
+    restart: on-failure
