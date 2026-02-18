@@ -121,8 +121,8 @@ class TestLagUnderThrottling:
         admin = AdminClient({"bootstrap.servers": KAFKA_BOOTSTRAP})
 
         # List consumer groups
-        groups = admin.list_consumer_groups(timeout=10)
-        group_names = [g.group_id for g in groups.result().valid]
+        groups = admin.list_consumer_groups()
+        group_names = [g.group_id for g in groups.result(timeout=10).valid]
         assert "inventory-service-group" in group_names, (
             f"Expected inventory-service-group in groups, got {group_names}"
         )
@@ -142,8 +142,8 @@ class TestLagUnderThrottling:
         # Query lag via admin client
         admin = AdminClient({"bootstrap.servers": KAFKA_BOOTSTRAP})
 
-        groups = admin.list_consumer_groups(timeout=10)
-        group_names = [g.group_id for g in groups.result().valid]
+        groups = admin.list_consumer_groups()
+        group_names = [g.group_id for g in groups.result(timeout=10).valid]
         assert "inventory-service-group" in group_names
         print(f"\nConsumer groups: {group_names}")
         print("To observe lag under throttling, restart with CONSUMER_THROTTLE_MS=100")
