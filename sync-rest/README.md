@@ -93,38 +93,54 @@ docker compose up --build
 
 ### Run manually (without Docker)
 
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
 Start each service in a separate terminal:
+
 ```bash
-# Terminal 1
-python sync-rest/order_service/order.py
+# Terminal 1 — Order Service
+cd sync-rest/order_service
+python order.py
 
-# Terminal 2 — optional --delay-time arg
-python sync-rest/inventory_service/inventory.py --delay-time 0
+# Terminal 2 — Inventory Service (optional --delay-time arg)
+cd sync-rest/inventory_service
+python inventory.py --delay-time 0
 
-# Terminal 3
-python sync-rest/notification_service/notification.py
+# Terminal 3 — Notification Service
+cd sync-rest/notification_service
+python notification.py
 ```
 
 ---
 
 ## Testing
 
-### Baseline latency test
+### 1. Baseline latency test
 
 Run N requests and measure total and average latency:
 
 ```bash
-python sync-rest/tests/testprogram.py --requests 10
+cd sync-rest/tests
+python testprogram.py --requests 10
 ```
 
-Output includes per-request latency, total latency, average latency, and success/error counts.
+**Test output:**
 
-### Inject 2s delay into Inventory
+![Baseline Test](tests/imagesManual/syncBaselineTest.png)
+
+**Order service log:**
+
+![Baseline Order Service](tests/imagesManual/syncBaseOrderService.png)
+
+**Inventory service log:**
+
+![Baseline Inventory](tests/imagesManual/syncBaselineInventory.png)
+
+**Notification service log:**
+
+![Baseline Notification](tests/imagesManual/syncBaselineNotification.png)
+
+---
+
+### 2. Inject 2s delay into Inventory
 
 **Option 1 — startup arg:**
 ```bash
@@ -141,14 +157,25 @@ Then run the latency test to observe the impact:
 python sync-rest/tests/testprogram.py --requests 5
 ```
 
-### Inject Inventory failure
+**Test output:**
+
+![Delay Test](tests/imagesManual/syncDelayTest.png)
+
+Reset after testing:
+```bash
+curl "http://localhost:8081/set-delay-time?delay-time=0"
+```
+
+---
+
+### 3. Inject Inventory failure
 
 Set inventory to fail 100% of the time:
 ```bash
 curl "http://localhost:8081/set-fail-rate?fail-rate=1.0"
 ```
 
-Place an order and observe the order service returns a `500` error response:
+Place an order:
 ```bash
 curl -s -X POST http://localhost:8080/order \
   -H "Content-Type: application/json" \
@@ -162,9 +189,22 @@ Expected response:
 }
 ```
 
-The order service catches the non-200 response and returns a `500` with the error reason.
+**Test output:**
 
-### Simulate timeout
+![Fail Test](tests/imagesManual/syncFailTest.png)
+
+**Order service log showing error response:**
+
+![Fail Order Service](tests/imagesManual/syncFailOrderService.png)
+
+Reset after testing:
+```bash
+curl "http://localhost:8081/set-fail-rate?fail-rate=0.0"
+```
+
+---
+
+### 4. Simulate timeout
 
 Set inventory delay longer than the order service timeout (5 seconds):
 ```bash
@@ -178,12 +218,19 @@ curl -s -X POST http://localhost:8080/order \
   -d '{"order": "test"}' | python3 -m json.tool
 ```
 
-Expected: after ~5 seconds, order service returns `500` with a `ReadTimeout` error — demonstrating that the timeout prevents indefinite blocking.
+Expected: after ~5 seconds, order service returns `500` with a `ReadTimeout` error.
 
-Reset delay after testing:
+**Test output:**
+
+![Timeout Test](tests/imagesManual/syncTimeoutTest.png)
+
+**Order service log showing timeout error:**
+
+![Timeout Order Service](tests/imagesManual/syncTimeoutOrderService.png)
+
+Reset after testing:
 ```bash
 curl "http://localhost:8081/set-delay-time?delay-time=0"
-curl "http://localhost:8081/set-fail-rate?fail-rate=0.0"
 ```
 
 ---
