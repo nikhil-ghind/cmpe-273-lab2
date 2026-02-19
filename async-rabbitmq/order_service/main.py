@@ -14,6 +14,9 @@ from common.rabbit import AMQP_URL, setup_orders_topology, ORDERS_EX, ORDER_PLAC
 app = FastAPI()
 app.state.conn = None
 
+# Local in-memory order store
+orders: dict = {}
+
 class Item(BaseModel):
     sku: str
     qty: int
@@ -68,6 +71,9 @@ async def create_order(order: OrderIn):
         "ts": datetime.now(timezone.utc).isoformat(),
     }
 
+    # Write to local store before publishing
+    orders[order_id] = {"order_id": order_id, "status": "PLACED", "data": event}
+
     msg = aio_pika.Message(
         body=json.dumps(event).encode(),
         content_type="application/json",
@@ -77,3 +83,13 @@ async def create_order(order: OrderIn):
     await app.state.exchange.publish(msg, routing_key=ORDER_PLACED_RK)
     print(f"[order] published OrderPlaced {order_id}")
     return {"order_id": order_id, "status": "PLACED"}
+
+@app.get("/order/{order_id}")
+def get_order(order_id: str):
+    if order_id not in orders:
+        return {"error": "not found"}, 404
+    return orders[order_id]
+
+@app.get("/orders")
+def list_orders():
+    return {"count": len(orders), "orders": list(orders.values())}
