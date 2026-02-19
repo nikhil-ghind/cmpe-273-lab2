@@ -26,6 +26,19 @@ def health():
     status = "ok"
     return jsonify({"status": status}), 200
 
+#set delay time from a get call
+@app.route("/set-delay-time", methods=["GET"])
+def setDelayTime():
+    #print("setting delay time")
+    inputDelayTime = request.args.get("delay-time", "")
+    #print("delay time: " + str(inputDelayTime))
+    try:
+        DELAY_TIME = int(inputDelayTime)
+        return jsonify({"New delay time": DELAY_TIME}), 200
+    except Exception as e:
+        return jsonify({"Error on setting delay time": str(e)}), 500
+
+
 #POST /reserve from order
 @app.route('/reserve', methods=['POST'])
 def process_reserve():

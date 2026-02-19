@@ -1,0 +1,22 @@
+services:
+    order_service:
+        build: ./order_service
+        ports:
+            - "8080:8080"
+        environment:
+            - FLASK_ENV=development
+        network_mode: "host"
+    inventory_service:
+        build: ./inventory_service
+        ports:
+            - "8081:8081"
+        environment:
+            - FLASK_ENV=development
+        network_mode: "host"
+    notification_service:
+        build: ./notification_service
+        ports:
+            - "8082:8082"
+        environment:
+            - FLASK_ENV=development
+        network_mode: "host"
