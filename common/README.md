@@ -257,6 +257,11 @@ docker compose down -v
 
 ## Test Results
 
+All test results and screenshots are also embedded inline in each part's README for easy reference:
+- [Part A Results](../sync-rest/README.md#testing)
+- [Part B Results](../async-rabbitmq/README.md#testing)
+- [Part C Results](../streaming-kafka/README.md#test-cases)
+
 ### Part A — Synchronous REST
 
 Results in [`sync-rest/tests/imagesManual/`](../sync-rest/tests/imagesManual/):
