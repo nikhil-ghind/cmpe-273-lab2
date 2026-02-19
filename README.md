@@ -1,5 +1,7 @@
 # CMPE 273 Lab 2 — Campus Food Ordering Workflow
 
+**Team:** Nikhil Ghind, Richie Nguyen, Jahnavi Chenna, Cameron Ghaemmaghami
+
 Three implementations of the same workflow — **User places order → Inventory reserved → User notified** — each demonstrating a different communication model.
 
 For full documentation, setup steps, API reference, and test results, see:
