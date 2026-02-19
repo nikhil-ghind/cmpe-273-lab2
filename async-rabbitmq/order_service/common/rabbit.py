@@ -34,6 +34,13 @@ async def setup_orders_topology(channel):
     dlq = await channel.declare_queue(ORDER_PLACED_DLQ, durable=True)
     await dlq.bind(dlx, routing_key=ORDER_PLACED_DLQ_RK)
 
+    # Delete existing queue if it exists (to handle property mismatches)
+    try:
+        await channel.queue_delete(ORDER_PLACED_Q)
+    except Exception:
+        # Queue doesn't exist or already deleted, which is fine
+        pass
+
     # main queue with DLQ config
     q = await channel.declare_queue(
         ORDER_PLACED_Q,

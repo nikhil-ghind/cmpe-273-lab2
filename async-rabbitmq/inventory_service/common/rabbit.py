@@ -24,7 +24,14 @@ async def setup_orders_topology(channel: aio_pika.abc.AbstractChannel):
     orders_ex = await channel.declare_exchange(
         ORDERS_EX, aio_pika.ExchangeType.DIRECT, durable=True
     )
-    q = await channel.declare_queue(ORDER_PLACED_Q, durable=True)
+    # Try to get existing queue passively first (avoids property conflicts)
+    try:
+        q = await channel.declare_queue(ORDER_PLACED_Q, durable=True, passive=True)
+    except Exception:
+        # Queue doesn't exist yet, create it (order service will create with DLQ, but if we're first, create without)
+        q = await channel.declare_queue(ORDER_PLACED_Q, durable=True)
+    
+    # Ensure binding exists (idempotent)
     await q.bind(orders_ex, routing_key=ORDER_PLACED_RK)
     return orders_ex, q
 

@@ -4,15 +4,26 @@ import json
 import uuid
 import asyncio
 from datetime import datetime, timezone
+from typing import Dict
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import aio_pika
 
-from common.rabbit import AMQP_URL, setup_orders_topology, ORDERS_EX, ORDER_PLACED_RK
+from common.rabbit import (
+    AMQP_URL, 
+    setup_orders_topology, 
+    setup_inventory_topology,
+    ORDERS_EX, 
+    ORDER_PLACED_RK,
+    INV_RESERVED_RK,
+    INV_FAILED_RK,
+)
 
 app = FastAPI()
 app.state.conn = None
+# In-memory store for order statuses
+app.state.order_statuses: Dict[str, str] = {}
 
 # Local in-memory order store
 orders: dict = {}
@@ -38,6 +49,26 @@ async def connect_with_retry(amqp_url: str, retries: int = 30, delay: float = 1.
             await asyncio.sleep(delay)
     raise last_exc
 
+async def handle_inventory_event(message: aio_pika.IncomingMessage):
+    """Handle InventoryReserved and InventoryFailed events to update order status."""
+    async with message.process(requeue=False):
+        try:
+            payload = json.loads(message.body.decode())
+            event_type = payload.get("event_type")
+            order_id = payload.get("order_id")
+            
+            if not order_id:
+                return
+            
+            if event_type == "InventoryReserved":
+                app.state.order_statuses[order_id] = "CONFIRMED"
+                print(f"[order] order {order_id} status updated to CONFIRMED")
+            elif event_type == "InventoryFailed":
+                app.state.order_statuses[order_id] = "FAILED"
+                print(f"[order] order {order_id} status updated to FAILED")
+        except Exception as e:
+            print(f"[order] error processing inventory event: {e}")
+
 @app.on_event("startup")
 async def startup():
     # connect to rabbit with retries so service doesn't crash on early start
@@ -47,7 +78,16 @@ async def startup():
 
     # Ensure exchange/queue exist (idempotent)
     app.state.exchange, _ = await setup_orders_topology(app.state.channel)
+    
+    # Setup inventory topology and consume inventory events
+    inventory_ex, reserved_q, failed_q = await setup_inventory_topology(app.state.channel)
+    
+    # Consume inventory events to track order status
+    await reserved_q.consume(handle_inventory_event)
+    await failed_q.consume(handle_inventory_event)
+    
     print("[order] connected to RabbitMQ and topology declared")
+    print("[order] consuming inventory events for order status tracking")
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -81,9 +121,12 @@ async def create_order(order: OrderIn):
     )
 
     await app.state.exchange.publish(msg, routing_key=ORDER_PLACED_RK)
+    # Initialize order status
+    app.state.order_statuses[order_id] = "PLACED"
     print(f"[order] published OrderPlaced {order_id}")
     return {"order_id": order_id, "status": "PLACED"}
 
+<<<<<<< HEAD
 @app.get("/order/{order_id}")
 def get_order(order_id: str):
     if order_id not in orders:
@@ -93,3 +136,21 @@ def get_order(order_id: str):
 @app.get("/orders")
 def list_orders():
     return {"count": len(orders), "orders": list(orders.values())}
+=======
+@app.get("/orders")
+async def list_orders():
+    """List all orders with their current status."""
+    orders = [
+        {"order_id": order_id, "status": status}
+        for order_id, status in app.state.order_statuses.items()
+    ]
+    return {"orders": orders, "count": len(orders)}
+
+@app.get("/order/{order_id}")
+async def get_order_status(order_id: str):
+    """Get the current status of an order."""
+    status = app.state.order_statuses.get(order_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"order_id": order_id, "status": status}
+>>>>>>> 439cbb2 (made some changes to order service)
