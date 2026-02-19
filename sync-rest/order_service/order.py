@@ -41,11 +41,11 @@ def process_order():
         logger.info(f"Sending {order_data} to InventoryService")
         
         #send order data to inventory; may be affected by inventory latency or availability
-        responseInventory = requests.post(INVENTORY_URL, json=order_data, headers=HEADERS)
+        responseInventory = requests.post(INVENTORY_URL, json=order_data, headers=HEADERS, timeout=5)
         if (responseInventory.ok == True):#if inventory call is successful
             logger.info(f"Successfully sent {order_data} to InventoryService")
             logger.info(f"Sending {order_data} to NotificationService")
-            responseNotification = requests.post(NOTIFICATION_URL, json = order_data, headers = HEADERS)#send to notification
+            responseNotification = requests.post(NOTIFICATION_URL, json = order_data, headers = HEADERS, timeout=5)#send to notification
             if (responseNotification.ok == True):
                 logger.info(f"Notification successfully sent")
             else:
