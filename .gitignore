@@ -1,4 +1,6 @@
-# Markdown files
+# Markdown files (exclude all except README.md)
+*.md
+!README.md
 
 # Claude
 .claude/
