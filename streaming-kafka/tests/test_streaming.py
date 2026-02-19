@@ -1,9 +1,5 @@
 """
 Tests for Part C – Streaming (Kafka).
-
-Prerequisites:
-  cd streaming-kafka && docker compose up --build
-  Then run: cd tests && pytest -v
 """
 
 import time

@@ -1,0 +1,14 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.3, pluggy-1.6.0 -- /home/cghaemm/CMPE273/week2LabAssignment/cmpe-273-lab2/streaming-kafka/tests/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/cghaemm/CMPE273/week2LabAssignment/cmpe-273-lab2/streaming-kafka/tests
+collecting ... collected 6 items
+
+test_streaming.py::TestLoadTest::test_produce_10k_events PASSED          [ 16%]
+test_streaming.py::TestLoadTest::test_inventory_processes_all PASSED     [ 33%]
+test_streaming.py::TestLoadTest::test_analytics_reflects_volume PASSED   [ 50%]
+test_streaming.py::TestLagUnderThrottling::test_can_query_consumer_groups PASSED [ 66%]
+test_streaming.py::TestLagUnderThrottling::test_produce_with_lag_observation PASSED [ 83%]
+test_streaming.py::TestReplay::test_replay_metrics PASSED                [100%]
+
+============================== 6 passed in 9.70s ===============================

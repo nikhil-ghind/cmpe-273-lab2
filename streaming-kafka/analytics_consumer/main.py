@@ -51,13 +51,16 @@ def reset_metrics():
         total_orders = 0
 
 
+def _get_failure_rate():
+    return (
+        failed_reservations / total_reservations
+        if total_reservations > 0
+        else 0.0
+    )
+
 def write_metrics():
     with metrics_lock:
-        failure_rate = (
-            failed_reservations / total_reservations
-            if total_reservations > 0
-            else 0.0
-        )
+        failure_rate = _get_failure_rate()
         lines = [
             "=== Analytics Metrics ===",
             f"Total orders seen: {total_orders}",
@@ -198,11 +201,7 @@ def replay():
 @app.get("/metrics")
 def get_metrics():
     with metrics_lock:
-        failure_rate = (
-            failed_reservations / total_reservations
-            if total_reservations > 0
-            else 0.0
-        )
+        failure_rate = _get_failure_rate()
         return {
             "total_orders": total_orders,
             "total_reservations": total_reservations,
