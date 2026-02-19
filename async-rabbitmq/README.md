@@ -195,16 +195,13 @@ docker compose logs inventory_service
 docker compose logs notification_service
 ```
 
-Expected inventory log:
-```
-[inventory] reservation OK for <order_id>
-[inventory] published InventoryReserved for <order_id>
-```
+**Inventory service log:**
 
-Expected notification log:
-```
-[notify] Order confirmed: <order_id>
-```
+![TC1 Inventory Log](tests_screenshots/TC1_Inventorylog.png)
+
+**Notification service log:**
+
+![TC1 Notification Log](tests_screenshots/TC1_Notifylog.png)
 
 ### 2. Backlog and recovery (60-second kill test)
 
@@ -223,7 +220,13 @@ done
 
 # Check backlog — should show 30 messages queued in order.placed.q
 docker compose exec rabbitmq rabbitmqctl list_queues name messages
+```
 
+**Backlog showing 30 queued messages:**
+
+![TC2 Backlog](tests_screenshots/TC2_Backup.png)
+
+```bash
 # Wait ~60 seconds, then restart inventory
 sleep 60
 docker compose start inventory_service
@@ -235,6 +238,10 @@ docker compose exec rabbitmq rabbitmqctl list_queues name messages
 docker compose logs inventory_service
 docker compose logs notification_service
 ```
+
+**Queue drained after recovery:**
+
+![TC2 Recovery](tests_screenshots/TC2_Recovery.png)
 
 Expected: `order.placed.q` drains to 0 and all 30 orders appear as confirmed in notification logs. Messages are retained durably by RabbitMQ while the consumer is down.
 
@@ -255,9 +262,14 @@ curl -s -X POST http://localhost:8001/order \
 ```
 
 After re-publishing the duplicate, check inventory logs:
-```
-[inventory] duplicate ignored: <order_id>
-```
+
+**Idempotency test result:**
+
+![TC3 Idempotency](tests_screenshots/TC3_dempotency.png)
+
+**Inventory log showing duplicate ignored:**
+
+![TC3 Inventory Log](tests_screenshots/TC3_Inventorylog.png)
 
 Only one `InventoryReserved` event is published — no double reservation.
 
@@ -271,25 +283,24 @@ curl -s -X POST http://localhost:8001/order \
   | python3 -m json.tool
 ```
 
-Expected inventory log:
-```
-[inventory] reservation FAILED for <order_id>
-[inventory] published InventoryFailed for <order_id>
-```
-
 **Trigger DLQ with malformed message:**
 
 Use the RabbitMQ management UI (`http://localhost:15672`) → Exchanges → `orders-ex` → Publish Message, and send invalid JSON or a message missing `order_id`. The inventory_service will reject it with `requeue=False`, routing it to `order.placed.dlq`.
+
+![Trigger DLQ](tests_screenshots/Trigger%20DLQ%20with%20malformed%20message.png)
+
+**Inventory log showing rejection:**
+
+![TC4 Inventory Log](tests_screenshots/TC4_Inventorylog.png)
 
 Verify the DLQ received the message:
 ```bash
 docker compose exec rabbitmq rabbitmqctl list_queues name messages
 ```
 
-Expected:
-```
-order.placed.dlq    1
-```
+**DLQ showing 1 queued message:**
+
+![TC4 DLQ](tests_screenshots/TC4_DLQ.png)
 
 ---
 
